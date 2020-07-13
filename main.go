@@ -89,7 +89,6 @@ func addbook(w http.ResponseWriter, r *http.Request){
 	var book Book
 	_ = json.NewDecoder(r.Body).Decode(&book)
 	book.ID = strconv.Itoa(assignid())
-	//fmt.Println(book.ID)
 	books = append(books, book)
 
 	json.NewEncoder(w).Encode(book)
@@ -100,7 +99,8 @@ func updatebook(w http.ResponseWriter, r *http.Request){
 	params := mux.Vars(r)
 	for index, item := range books {
 		if item.ID == params["id"] {
-			books = append(books[:index], books[index+1:]...)
+			books[index] = books[len(books)-1]
+			books = books[:len(books)-1]
 			var book Book
 			_ = json.NewDecoder(r.Body).Decode(&book)
 			book.ID = params["id"]
@@ -116,7 +116,8 @@ func deletebook(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	for index, item := range books {
 		if item.ID == params["id"] {
-			books = append(books[:index], books[index+1:]...)
+			books[index] = books[len(books)-1]
+			books = books[:len(books)-1]
 			break
 		}
 	}
