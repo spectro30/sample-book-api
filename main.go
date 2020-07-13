@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 
@@ -29,7 +30,7 @@ func assignid () int {
 		return len(books) + 1
 	}
 	var res = unusedid[0]
-	unusedid = unusedid[1:len(unusedid)-1]
+	unusedid = unusedid[1:len(unusedid)]
 	return res
 }
 
@@ -87,26 +88,55 @@ func addbook(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Context-Type", "application/json")
 	var book Book
 	_ = json.NewDecoder(r.Body).Decode(&book)
+	book.ID = strconv.Itoa(assignid())
+	//fmt.Println(book.ID)
 	books = append(books, book)
-	book.ID = string(assignid())
+
 	json.NewEncoder(w).Encode(book)
 }
 
+func updatebook(w http.ResponseWriter, r *http.Request){
+	w.Header().Set("Content-Type", "application/json")
+	params := mux.Vars(r)
+	for index, item := range books {
+		if item.ID == params["id"] {
+			books = append(books[:index], books[index+1:]...)
+			var book Book
+			_ = json.NewDecoder(r.Body).Decode(&book)
+			book.ID = params["id"]
+			books = append(books, book)
+			json.NewEncoder(w).Encode(book)
+			return
+		}
+	}
+}
+
+func deletebook(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	params := mux.Vars(r)
+	for index, item := range books {
+		if item.ID == params["id"] {
+			books = append(books[:index], books[index+1:]...)
+			break
+		}
+	}
+	json.NewEncoder(w).Encode(books)
+	intid, _ := strconv.ParseInt(params["id"], 10, 64)
+	unusedid = append(unusedid, int(intid))
+}
 
 
 func main(){
 	r := mux.NewRouter()
 	appendbooks()
 
-	// Get Methods
 	r.HandleFunc("/books", getallbooks).Methods("GET")
 	r.HandleFunc("/books/bookid/{id}", getbookbyid).Methods("GET")
 	r.HandleFunc("/books/authorid/{authorid}", getbookbyauthorid).Methods("GET")
 	r.HandleFunc("/books/genre/{genre}", getbookbygenre).Methods("GET")
-
-	//Post Methods
 	r.HandleFunc("/books", addbook).Methods("POST")
-
+	r.HandleFunc("/books/{id}", updatebook).Methods("PUT")
+	r.HandleFunc("/books/{id}", deletebook).Methods("DELETE")
 
 	log.Fatal(http.ListenAndServe(":9003", r))
 
