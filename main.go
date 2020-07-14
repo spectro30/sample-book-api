@@ -249,8 +249,18 @@ func main(){
 /*
 
 {
-    "id": "104",
+    "id": "11",
     "title": "HARRY POTTER AND THE PHILOSOPHER’S STONE",
+    "author": {
+        "firstname": "J.K.",
+        "lastname": "Rowling",
+        "authorid": "25"
+    },
+    "genre": "Fantasy"
+}
+{
+    "id": "12",
+    "title": "Harry Potter and the Prisoner of Azkaban",
     "author": {
         "firstname": "J.K.",
         "lastname": "Rowling",
