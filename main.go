@@ -2,11 +2,99 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
+
+// ---------------Authentication--------------
+
+var jwtkey = []byte("chandlerbing")
+
+var admins = map[string]string{
+	"alex" : "123456",
+	"ben"  : "654321",
+}
+
+type Credentials struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type Claims struct {
+	Username string `json:"username"`
+	jwt.StandardClaims
+}
+
+func login(w http.ResponseWriter, r *http.Request){
+	var creds Credentials
+	err := json.NewDecoder(r.Body).Decode(&creds)
+	if err != nil{
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	correctpassword, ok := admins[creds.Username]
+	if !ok || correctpassword != creds.Password {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	expiretime := time.Now().Add(15 * time.Minute)
+
+	claims := &Claims{
+		Username: creds.Username,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt:  expiretime.Unix(),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(jwtkey)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name : "token",
+		Value: tokenString,
+		Expires: expiretime,
+	})
+}
+
+func accesscheck(w http.ResponseWriter, r *http.Request) bool{
+	c, err := r.Cookie("token")
+	if err != nil {
+		if err == http.ErrNoCookie {
+			w.WriteHeader(http.StatusUnauthorized)
+			return false
+		}
+	}
+
+	tokenstring := c.Value
+	claims := &Claims{}
+	tkn, err := jwt.ParseWithClaims(tokenstring, claims, func(token *jwt.Token)(interface{}, error){
+		return jwtkey, nil
+	})
+	if err != nil {
+		if err == jwt.ErrSignatureInvalid{
+			w.WriteHeader(http.StatusBadRequest)
+			return false
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		return false
+	}
+	if !tkn.Valid {
+		w.WriteHeader(http.StatusUnauthorized)
+		return false
+	}
+	return true
+}
+
+// --------------------------------
+
 
 
 type Book struct{
@@ -85,9 +173,16 @@ func getbookbygenre(w http.ResponseWriter, r *http.Request){
 }
 
 func addbook(w http.ResponseWriter, r *http.Request){
+	if !accesscheck(w, r){
+		return
+	}
 	w.Header().Set("Context-Type", "application/json")
 	var book Book
-	_ = json.NewDecoder(r.Body).Decode(&book)
+	err := json.NewDecoder(r.Body).Decode(&book)
+	if err != nil{
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	book.ID = strconv.Itoa(assignid())
 	books = append(books, book)
 
@@ -95,6 +190,9 @@ func addbook(w http.ResponseWriter, r *http.Request){
 }
 
 func updatebook(w http.ResponseWriter, r *http.Request){
+	if !accesscheck(w, r){
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	for index, item := range books {
@@ -112,6 +210,9 @@ func updatebook(w http.ResponseWriter, r *http.Request){
 }
 
 func deletebook(w http.ResponseWriter, r *http.Request) {
+	if !accesscheck(w, r){
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	for index, item := range books {
@@ -131,6 +232,7 @@ func main(){
 	r := mux.NewRouter()
 	appendbooks()
 
+	r.HandleFunc("/login", login)
 	r.HandleFunc("/books", getallbooks).Methods("GET")
 	r.HandleFunc("/books/bookid/{id}", getbookbyid).Methods("GET")
 	r.HandleFunc("/books/authorid/{authorid}", getbookbyauthorid).Methods("GET")
@@ -145,7 +247,6 @@ func main(){
 
 
 /*
-addbook body:
 
 {
     "id": "104",
@@ -155,7 +256,18 @@ addbook body:
         "lastname": "Rowling",
         "authorid": "25"
     },
-    "genre": "Fiction"
+    "genre": "Fantasy"
+}
+
+{
+    "username": "ben",
+    "password": "654321"
+}
+
+{
+    "username": "alex",
+    "password": "123456"
+
 }
 
 
