@@ -74,7 +74,7 @@ func accesscheck(w http.ResponseWriter, r *http.Request) bool{
 
 	if err != nil {
 		if err == jwt.ErrSignatureInvalid{
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusUnauthorized)
 			return false
 		}
 		w.WriteHeader(http.StatusBadRequest)
