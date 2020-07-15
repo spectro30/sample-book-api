@@ -24,7 +24,9 @@ type Credentials struct {
 	Password string `json:"password"`
 }
 
-func login(w http.ResponseWriter, r *http.Request){
+
+
+func Login(w http.ResponseWriter, r *http.Request){
 	var creds Credentials
 	err := json.NewDecoder(r.Body).Decode(&creds)
 	if err != nil{
@@ -57,7 +59,7 @@ func login(w http.ResponseWriter, r *http.Request){
 	})
 }
 
-func accesscheck(w http.ResponseWriter, r *http.Request) bool{
+func Accesscheck(w http.ResponseWriter, r *http.Request) bool{
 	c, err := r.Cookie("token")
 	if err != nil {
 		if err == http.ErrNoCookie {
@@ -107,7 +109,7 @@ type Author struct{
 var books []Book
 var unusedid [] int
 
-func assignid () int {
+func Assignid () int {
 	if len(unusedid) == 0 {
 		return len(books) + 1
 	}
@@ -116,7 +118,7 @@ func assignid () int {
 	return res
 }
 
-func appendbooks () {
+func Appendbooks () {
 	books = append(books, Book{ID: "1", Title: "The Kite Runner",
 		Author: Author{Firstname:"Khaled", Lastname: "Hosseini", AuthorID: "40"}, Genre: "Drama" })
 	books = append(books, Book{ID: "2", Title: "Inception Point",
@@ -125,12 +127,12 @@ func appendbooks () {
 		Author: Author{Firstname:"Dan", Lastname: "Brown", AuthorID: "53"}, Genre: "Thriller" })
 }
 
-func getallbooks(w http.ResponseWriter, r *http.Request){
+func Getallbooks(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Context-Type", "application/json")
 	json.NewEncoder(w).Encode(books)
 }
 
-func getbookbyid(w http.ResponseWriter, r *http.Request){
+func Getbookbyid(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	for _, item := range books{
@@ -142,7 +144,7 @@ func getbookbyid(w http.ResponseWriter, r *http.Request){
 	json.NewEncoder(w).Encode(&Book{})
 }
 
-func getbookbyauthorid(w http.ResponseWriter, r *http.Request){
+func Getbookbyauthorid(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	var bookbyauth []Book
@@ -154,7 +156,7 @@ func getbookbyauthorid(w http.ResponseWriter, r *http.Request){
 	json.NewEncoder(w).Encode(bookbyauth)
 }
 
-func getbookbygenre(w http.ResponseWriter, r *http.Request){
+func Getbookbygenre(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	var bookbygen []Book
@@ -166,8 +168,8 @@ func getbookbygenre(w http.ResponseWriter, r *http.Request){
 	json.NewEncoder(w).Encode(bookbygen)
 }
 
-func addbook(w http.ResponseWriter, r *http.Request){
-	if !accesscheck(w, r){
+func Addbook(w http.ResponseWriter, r *http.Request){
+	if !Accesscheck(w, r){
 		return
 	}
 	w.Header().Set("Context-Type", "application/json")
@@ -177,14 +179,14 @@ func addbook(w http.ResponseWriter, r *http.Request){
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	book.ID = strconv.Itoa(assignid())
+	book.ID = strconv.Itoa(Assignid())
 	books = append(books, book)
 
 	json.NewEncoder(w).Encode(book)
 }
 
-func updatebook(w http.ResponseWriter, r *http.Request){
-	if !accesscheck(w, r){
+func Updatebook(w http.ResponseWriter, r *http.Request){
+	if !Accesscheck(w, r){
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -203,8 +205,8 @@ func updatebook(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func deletebook(w http.ResponseWriter, r *http.Request) {
-	if !accesscheck(w, r){
+func Deletebook(w http.ResponseWriter, r *http.Request) {
+	if !Accesscheck(w, r){
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -224,16 +226,16 @@ func deletebook(w http.ResponseWriter, r *http.Request) {
 
 func main(){
 	r := mux.NewRouter()
-	appendbooks()
+	Appendbooks()
 
-	r.HandleFunc("/login", login)
-	r.HandleFunc("/books", getallbooks).Methods("GET")
-	r.HandleFunc("/books/bookid/{id}", getbookbyid).Methods("GET")
-	r.HandleFunc("/books/authorid/{authorid}", getbookbyauthorid).Methods("GET")
-	r.HandleFunc("/books/genre/{genre}", getbookbygenre).Methods("GET")
-	r.HandleFunc("/books", addbook).Methods("POST")
-	r.HandleFunc("/books/{id}", updatebook).Methods("PUT")
-	r.HandleFunc("/books/{id}", deletebook).Methods("DELETE")
+	r.HandleFunc("/login", Login)
+	r.HandleFunc("/books", Getallbooks).Methods("GET")
+	r.HandleFunc("/books/bookid/{id}", Getbookbyid).Methods("GET")
+	r.HandleFunc("/books/authorid/{authorid}", Getbookbyauthorid).Methods("GET")
+	r.HandleFunc("/books/genre/{genre}", Getbookbygenre).Methods("GET")
+	r.HandleFunc("/books", Addbook).Methods("POST")
+	r.HandleFunc("/books/{id}", Updatebook).Methods("PUT")
+	r.HandleFunc("/books/{id}", Deletebook).Methods("DELETE")
 
 	log.Fatal(http.ListenAndServe(":9003", r))
 
