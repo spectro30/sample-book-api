@@ -24,11 +24,6 @@ type Credentials struct {
 	Password string `json:"password"`
 }
 
-type Claims struct {
-	Username string `json:"username"`
-	jwt.StandardClaims
-}
-
 func login(w http.ResponseWriter, r *http.Request){
 	var creds Credentials
 	err := json.NewDecoder(r.Body).Decode(&creds)
@@ -44,11 +39,9 @@ func login(w http.ResponseWriter, r *http.Request){
 
 	expiretime := time.Now().Add(15 * time.Minute)
 
-	claims := &Claims{
-		Username: creds.Username,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt:  expiretime.Unix(),
-		},
+	claims := jwt.StandardClaims{
+		Id: creds.Username,
+		ExpiresAt:  expiretime.Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -74,10 +67,11 @@ func accesscheck(w http.ResponseWriter, r *http.Request) bool{
 	}
 
 	tokenstring := c.Value
-	claims := &Claims{}
+	claims := &jwt.StandardClaims{}
 	tkn, err := jwt.ParseWithClaims(tokenstring, claims, func(token *jwt.Token)(interface{}, error){
 		return jwtkey, nil
 	})
+
 	if err != nil {
 		if err == jwt.ErrSignatureInvalid{
 			w.WriteHeader(http.StatusBadRequest)
@@ -118,7 +112,7 @@ func assignid () int {
 		return len(books) + 1
 	}
 	var res = unusedid[0]
-	unusedid = unusedid[1:len(unusedid)]
+	unusedid = unusedid[1:]
 	return res
 }
 
