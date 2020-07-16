@@ -49,4 +49,76 @@ func TestGetallbooks(t *testing.T) {
 	}
 }
 
+func TestGetbookbyauthorid(t *testing.T) {
+	testData := []struct{
+		qry      string
+		errorText string
+		status 	  int
+	}{
+		{qry: "53",  errorText: "200 StatusOK", status: 200},
+		{qry: "40",  errorText: "200 StatusOK", status: 200},
+		{qry: "5",  errorText: "200 StatusOK", status: 200},
+		{qry: "1", errorText: "200 StatusOK", status: 200},
+	}
+	for _, item := range testData {
+		req, err := http.NewRequest("POST", "localhost:9003/books/authorid/"+item.qry, nil)
+		if err != nil {
+			t.Fatalf("Could not create Request: %v", err)
+		}
+		rr := httptest.NewRecorder()
+		Getbookbyauthorid(rr, req)
+		if res := rr.Result(); res.StatusCode != item.status {
+			t.Errorf("expected %v: got %v", item.errorText ,res.Status)
+		}
+	}
+}
+
+func TestGetbookbygenre(t *testing.T) {
+	testData := []struct{
+		qry      string
+		errorText string
+		status 	  int
+	}{
+		{qry: "Fantasy",  errorText: "200 StatusOK", status: 200},
+		{qry: "Genre",  errorText: "200 StatusOK", status: 200},
+		{qry: "Thriller",  errorText: "200 StatusOK", status: 200},
+		{qry: "Drama", errorText: "200 StatusOK", status: 200},
+	}
+	for _, item := range testData {
+		req, err := http.NewRequest("POST", "localhost:9003/books/genre/"+item.qry, nil)
+		if err != nil {
+			t.Fatalf("Could not create Request: %v", err)
+		}
+		rr := httptest.NewRecorder()
+		Getbookbyauthorid(rr, req)
+		if res := rr.Result(); res.StatusCode != item.status {
+			t.Errorf("expected %v: got %v", item.errorText ,res.Status)
+		}
+	}
+}
+
+func TestGetbookbyid(t *testing.T) {
+	testData := []struct{
+		qry      string
+		errorText string
+		status 	  int
+	}{
+		{qry: "1",  errorText: "200 StatusOK", status: 200},
+		{qry: "2",  errorText: "200 StatusOK", status: 200},
+		{qry: "3",  errorText: "200 StatusOK", status: 200},
+		{qry: "4", errorText: "200 StatusOK", status: 200},
+	}
+	for _, item := range testData {
+		req, err := http.NewRequest("POST", "localhost:9003/books/bookid/"+item.qry, nil)
+		if err != nil {
+			t.Fatalf("Could not create Request: %v", err)
+		}
+		rr := httptest.NewRecorder()
+		Getbookbyauthorid(rr, req)
+		if res := rr.Result(); res.StatusCode != item.status {
+			t.Errorf("expected %v: got %v", item.errorText ,res.Status)
+		}
+	}
+}
+
 
