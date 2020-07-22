@@ -107,6 +107,7 @@ type Author struct{
 }
 
 var books []Book
+
 var unusedid [] int
 
 func Assignid () int {
@@ -196,7 +197,10 @@ func Updatebook(w http.ResponseWriter, r *http.Request){
 			books[index] = books[len(books)-1]
 			books = books[:len(books)-1]
 			var book Book
-			_ = json.NewDecoder(r.Body).Decode(&book)
+			err := json.NewDecoder(r.Body).Decode(&book)
+			if err != nil{
+				w.WriteHeader(http.StatusBadRequest)
+			}
 			book.ID = params["id"]
 			books = append(books, book)
 			json.NewEncoder(w).Encode(book)
@@ -237,7 +241,7 @@ func main(){
 	r.HandleFunc("/books/{id}", Updatebook).Methods("PUT")
 	r.HandleFunc("/books/{id}", Deletebook).Methods("DELETE")
 
-	log.Fatal(http.ListenAndServe(":9003", r))
+	log.Fatal(http.ListenAndServe(":8888", r))
 
 }
 

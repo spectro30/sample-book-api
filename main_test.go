@@ -8,6 +8,7 @@ import (
 	"testing"
 )
 
+
 func TestLogin(t *testing.T) {
 	testData := []struct{
 		name      string
@@ -21,7 +22,7 @@ func TestLogin(t *testing.T) {
 		{name: "simba", pass: "11111", errorText: "401 Unauthorized", status: 401},
 		{name: "timon", pass: "1111", errorText: "401 Unauthorized", status: 401},
 	}
-	for _, item := range testData {
+	for _, item := range tgestData {
 		cred := Credentials{Username: item.name, Password: item.pass}
 		b, _ := json.Marshal(cred)
 		iorData := bytes.NewReader(b)
@@ -37,8 +38,10 @@ func TestLogin(t *testing.T) {
 	}
 }
 
+
 func TestGetallbooks(t *testing.T) {
 	req, err := http.NewRequest("GET", "/books", nil)
+	req.Header.Set("","")
 	if err != nil {
 		t.Fatalf("Could not create Request: %v", err)
 	}
@@ -61,7 +64,7 @@ func TestGetbookbyauthorid(t *testing.T) {
 		{qry: "1", errorText: "200 StatusOK", status: 200},
 	}
 	for _, item := range testData {
-		req, err := http.NewRequest("POST", "localhost:9003/books/authorid/"+item.qry, nil)
+		req, err := http.NewRequest("GET", "localhost:9003/books/authorid/"+item.qry, nil)
 		if err != nil {
 			t.Fatalf("Could not create Request: %v", err)
 		}
@@ -85,7 +88,7 @@ func TestGetbookbygenre(t *testing.T) {
 		{qry: "Drama", errorText: "200 StatusOK", status: 200},
 	}
 	for _, item := range testData {
-		req, err := http.NewRequest("POST", "localhost:9003/books/genre/"+item.qry, nil)
+		req, err := http.NewRequest("GET", "localhost:9003/books/genre/"+item.qry, nil)
 		if err != nil {
 			t.Fatalf("Could not create Request: %v", err)
 		}
@@ -109,7 +112,7 @@ func TestGetbookbyid(t *testing.T) {
 		{qry: "4", errorText: "200 StatusOK", status: 200},
 	}
 	for _, item := range testData {
-		req, err := http.NewRequest("POST", "localhost:9003/books/bookid/"+item.qry, nil)
+		req, err := http.NewRequest("GET", "localhost:9003/books/bookid/"+item.qry, nil)
 		if err != nil {
 			t.Fatalf("Could not create Request: %v", err)
 		}
@@ -120,5 +123,61 @@ func TestGetbookbyid(t *testing.T) {
 		}
 	}
 }
+
+func TestAddbook(t *testing.T) {
+	var tt []Book
+	tt = append(tt, Book{ID: "1", Title: "The Kite Runner",
+		Author: Author{Firstname:"Khaled", Lastname: "Hosseini", AuthorID: "40"}, Genre: "Drama" })
+	tt = append(tt, Book{ID: "2", Title: "Inception Point",
+		Author: Author{Firstname:"Dan", Lastname: "Brown", AuthorID: "53"}, Genre: "Thriller" })
+	tt = append(tt, Book{ID: "3", Title: "Lost Symbol",
+		Author: Author{Firstname:"Dan", Lastname: "Brown", AuthorID: "53"}, Genre: "Thriller" })
+
+	for _, item := range tt {
+		b, _ := json.Marshal(item)
+		iorData := bytes.NewReader(b)
+		req, err := http.NewRequest("POST", "localhost:9003/books", iorData)
+		if err != nil {
+			t.Fatalf("Could not create Request: %v", err)
+		}
+		rr := httptest.NewRecorder()
+		Addbook(rr, req)
+		if res := rr.Result(); res.StatusCode != http.StatusUnauthorized {
+			t.Errorf("expected 200 StatusOK: got %v",res.Status)
+		}
+	}
+}
+
+
+func TestDeletebook(t *testing.T) {
+	testData := []struct{
+		qry      string
+		errorText string
+		status 	  int
+	}{
+		{qry: "1",  errorText: "200 StatusOK", status: 401},
+		{qry: "2",  errorText: "200 StatusOK", status: 401},
+		{qry: "3",  errorText: "200 StatusOK", status: 401},
+		{qry: "4", errorText: "200 StatusOK", status: 401},
+	}
+	for _, item := range testData {
+		req, err := http.NewRequest("DELETE", "localhost:9003/books/"+item.qry, nil)
+		if err != nil {
+			t.Fatalf("Could not create Request: %v", err)
+		}
+		rr := httptest.NewRecorder()
+		Deletebook(rr, req)
+		if res := rr.Result(); res.StatusCode != item.status {
+			t.Errorf("expected %v: got %v", item.errorText ,res.Status)
+		}
+	}
+}
+
+
+
+
+
+
+
 
 
