@@ -22,7 +22,7 @@ func TestLogin(t *testing.T) {
 		{name: "simba", pass: "11111", errorText: "401 Unauthorized", status: 401},
 		{name: "timon", pass: "1111", errorText: "401 Unauthorized", status: 401},
 	}
-	for _, item := range tgestData {
+	for _, item := range testData {
 		cred := Credentials{Username: item.name, Password: item.pass}
 		b, _ := json.Marshal(cred)
 		iorData := bytes.NewReader(b)
