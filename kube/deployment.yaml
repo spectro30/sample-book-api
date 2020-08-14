@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bookapp-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bookapp
+  template:
+    metadata:
+      labels:
+        app: bookapp
+    spec:
+      containers:
+      - name:  bookapp
+        image: spectro30/bookapp:latest
+        ports:
+        - containerPort: 8888
